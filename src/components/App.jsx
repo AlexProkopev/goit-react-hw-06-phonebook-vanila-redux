@@ -4,20 +4,31 @@ import { nanoid } from 'nanoid';
 import Contacts from './Contacts/Contacts';
 import Filters from './Filters/Filters';
 import css from './App.module.css';
+import { useDispatch, useSelector } from 'react-redux';
+
+
 
 const App = () => {
 
-  const localContacts = () => JSON.parse(localStorage.getItem('contacts')) || [];
+  const dispatch = useDispatch();
 
-  const [contactsState, setContacts] = useState(localContacts);
-  const [filter, setFilter] = useState('');
+  const contactsRed = useSelector((state)=> state.contactsStore.contacts)
+  console.log('contactsRed: ', contactsRed);
+  const filterState = useSelector(( state )=> state.filtersStore.filters)
+  console.log('filterRed: ', filterState);
+  
+
+  // const localContacts = () => JSON.parse(localStorage.getItem('contacts')) || [];
+
+  // const [contactsState, setContacts] = useState(localContacts);
+  // const [filter, setFilter] = useState('');
 
   const handleAddContact = contacts => {
-    const hasDuplicatesName = contactsState.some(
+    const hasDuplicatesName = contactsRed.some(
       contact => contact.name.toLowerCase() === contacts.name.toLowerCase()
     );
 
-    const hasDuplicatesNumber = contactsState.some(
+    const hasDuplicatesNumber = contactsRed.some(
       contact => contact.number === contacts.number
     );
 
@@ -38,20 +49,39 @@ const App = () => {
       name: formattedName,
       number: contacts.number,
     };
+    
+ const addProduct = {
+  type: 'contacts/addContacts',
+  payload: finalContact,
+ }
 
-    setContacts([...contactsState, finalContact]);
+ dispatch(addProduct)
+    // setContacts([...contactsState, finalContact]);
   };
 
-  const hendleDeletedContact = id => setContacts(contactsState.filter(contact => contact.id !== id));
+  const hendleDeletedContact = id => {
+    const deletProductAction = {
+      type: 'contacts/deleteContacts',
+      payload: id,
+    }
+
+    dispatch(deletProductAction)
+  };
  
 
-  const handleFilterContact = evt => setFilter(evt.currentTarget.value);
+  const handleFilterContact = evt => {
+    const filterContacts = {
+      type: 'filters/changeFilter',
+      payload: evt.target.value,
+    }
+    dispatch(filterContacts)
+  };
   
 
   const getContacts = () => {
-    const filterLowerCase = filter.toLowerCase();
+    const filterLowerCase = filterState.toLowerCase();
 
-    return contactsState.filter(({ name }) =>
+    return contactsRed.filter(({ name }) =>
       name.toLowerCase().includes(filterLowerCase)
     );
   };
@@ -59,21 +89,21 @@ const App = () => {
   //--------------------------------------
 
   useEffect(() => {
-    localStorage.setItem('contacts', JSON.stringify(contactsState));
-  }, [contactsState]);
+    localStorage.setItem('contacts', JSON.stringify(contactsRed));
+  }, [contactsRed]);
 
   return (
     <div className={css.container}>
       <h1 className={css.title}>Phonebook</h1>
       <Phonebook
         handleAddContact={handleAddContact}
-        contactState={contactsState}
+        contactState={contactsRed}
       />
 
       <div className={css.filtersWrap}>
         <h2 className={css.title}>Contacts</h2>
-        {contactsState.length ? (
-          <Filters handleFilterContact={handleFilterContact} value={filter} />
+        {contactsRed.length ? (
+          <Filters handleFilterContact={handleFilterContact} value={filterState} />
         ) : (
           <h2 className={css.title}>Создайте первый контакт</h2>
         )}
